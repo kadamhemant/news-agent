@@ -7,25 +7,25 @@ on:
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  update-data:
+  update-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
-      - name: Export data
+      - name: Update data files
         run: |
           python3 -c "
           import json
           from datetime import datetime
           
-          # News data
+          # Fresh news data
           news_data = [
               {
                   'title': 'OpenAI Announces GPT-5 with Revolutionary Reasoning',
@@ -37,10 +37,10 @@ jobs:
                   'timestamp': datetime.now().isoformat()
               },
               {
-                  'title': 'Federal Reserve Signals Interest Rate Cut',
+                  'title': 'Federal Reserve Signals Interest Rate Cut in Q3 2026',
                   'source': 'Reuters',
                   'category': 'finance',
-                  'excerpt': 'Fed Chair Powell hints at potential rate reduction...',
+                  'excerpt': 'Fed Chair Powell hints at potential rate reduction as inflation cools...',
                   'url': '#',
                   'date': datetime.now().strftime('%b %d, %I:%M %p'),
                   'timestamp': datetime.now().isoformat()
@@ -49,7 +49,16 @@ jobs:
                   'title': 'Tesla Stock Surges on Autonomous Vehicle Breakthrough',
                   'source': 'Bloomberg',
                   'category': 'finance',
-                  'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 improvements...',
+                  'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...',
+                  'url': '#',
+                  'date': datetime.now().strftime('%b %d, %I:%M %p'),
+                  'timestamp': datetime.now().isoformat()
+              },
+              {
+                  'title': 'NVIDIA Unveils Next-Gen AI Chips for Large Language Models',
+                  'source': 'VentureBeat',
+                  'category': 'tech',
+                  'excerpt': 'The new Blackwell architecture promises 10x performance improvements...',
                   'url': '#',
                   'date': datetime.now().strftime('%b %d, %I:%M %p'),
                   'timestamp': datetime.now().isoformat()
@@ -59,7 +68,7 @@ jobs:
           with open('data/news.json', 'w') as f:
               json.dump(news_data, f, indent=2)
           
-          print('News data updated')
+          print('✅ News data updated')
           
           # Market data
           market_data = [
@@ -72,14 +81,15 @@ jobs:
           with open('data/market.json', 'w') as f:
               json.dump(market_data, f, indent=2)
           
-          print('Market data updated')
+          print('✅ Market data updated')
           "
       
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+          publish_branch: gh-pages
       
-      - name: Notify completion
-        run: echo "✅ Dashboard updated successfully!"
+      - name: Success notification
+        run: echo "🎉 Dashboard deployed successfully!"
