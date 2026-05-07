@@ -77,11 +77,11 @@ def fetch_live_market_data():
             print("⚠️  FINNHUB_API_KEY not found, using sample market data")
             return get_sample_market_data()
 
-        # Fetch US Indices from Finnhub
+        # Fetch US Index ETFs from Finnhub (free tier supports stocks/ETFs, not raw indices)
         indices = [
-            {'symbol': '^GSPC', 'name': 'S&P 500'},
-            {'symbol': '^INDC', 'name': 'Dow Jones'},
-            {'symbol': '^IXIC', 'name': 'NASDAQ'}
+            {'symbol': 'SPY', 'name': 'S&P 500'},
+            {'symbol': 'DIA', 'name': 'Dow Jones'},
+            {'symbol': 'QQQ', 'name': 'NASDAQ'}
         ]
 
         for index in indices:
@@ -97,7 +97,13 @@ def fetch_live_market_data():
 
                 quote = response.json()
                 current_price = quote.get('c', 0)
-                prev_close = quote.get('pc', 1)
+                prev_close = quote.get('pc', 0)
+
+                # Skip if data unavailable (Finnhub returns 0 for unsupported symbols)
+                if current_price == 0 or prev_close == 0:
+                    print(f"⚠️  No data available for {index['name']}, skipping")
+                    continue
+
                 change = current_price - prev_close
                 change_percent = (change / prev_close * 100) if prev_close else 0
 
