@@ -1,64 +1,63 @@
-name: Update News Dashboard
+name: Deploy News Dashboard
 
 on:
   schedule:
-    # Run every hour at minute 0
     - cron: '0 * * * *'
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  update-and-deploy:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
       
-      - name: Update data files
+      - name: Update Data Files
         run: |
           python3 -c "
           import json
           from datetime import datetime
           
-          # Fresh news data
           news_data = [
               {
-                  'title': 'OpenAI Announces GPT-5 with Revolutionary Reasoning',
+                  'title': 'OpenAI GPT-5 Revolutionary Reasoning',
                   'source': 'TechCrunch',
                   'category': 'ai',
-                  'excerpt': 'OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities...',
+                  'excerpt': 'OpenAI unveils GPT-5 with unprecedented abilities...',
                   'url': '#',
                   'date': datetime.now().strftime('%b %d, %I:%M %p'),
                   'timestamp': datetime.now().isoformat()
               },
               {
-                  'title': 'Federal Reserve Signals Interest Rate Cut in Q3 2026',
+                  'title': 'Fed Signals Interest Rate Cut',
                   'source': 'Reuters',
                   'category': 'finance',
-                  'excerpt': 'Fed Chair Powell hints at potential rate reduction as inflation cools...',
+                  'excerpt': 'Powell hints at rate reduction as inflation cools...',
                   'url': '#',
                   'date': datetime.now().strftime('%b %d, %I:%M %p'),
                   'timestamp': datetime.now().isoformat()
               },
               {
-                  'title': 'Tesla Stock Surges on Autonomous Vehicle Breakthrough',
+                  'title': 'Tesla Stock Surges on FSD',
                   'source': 'Bloomberg',
                   'category': 'finance',
-                  'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...',
-                  'url': '#',
-                  'date': datetime.now().strftime('%b %d, %I:%M %p'),
-                  'timestamp': datetime.now().isoformat()
-              },
-              {
-                  'title': 'NVIDIA Unveils Next-Gen AI Chips for Large Language Models',
-                  'source': 'VentureBeat',
-                  'category': 'tech',
-                  'excerpt': 'The new Blackwell architecture promises 10x performance improvements...',
+                  'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 improvements...',
                   'url': '#',
                   'date': datetime.now().strftime('%b %d, %I:%M %p'),
                   'timestamp': datetime.now().isoformat()
@@ -68,9 +67,6 @@ jobs:
           with open('data/news.json', 'w') as f:
               json.dump(news_data, f, indent=2)
           
-          print('✅ News data updated')
-          
-          # Market data
           market_data = [
               {'name': 'S&P 500', 'value': '5,234.18', 'change': '+1.24%', 'positive': True},
               {'name': 'Dow Jones', 'value': '41,087.13', 'change': '+0.89%', 'positive': True},
@@ -81,15 +77,19 @@ jobs:
           with open('data/market.json', 'w') as f:
               json.dump(market_data, f, indent=2)
           
-          print('✅ Market data updated')
+          print('✅ Data updated successfully')
           "
       
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-          publish_branch: gh-pages
+          path: '.'
       
-      - name: Success notification
-        run: echo "🎉 Dashboard deployed successfully!"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Success
+        run: |
+          echo "🎉 Dashboard deployed successfully!"
+          echo "URL: ${{ steps.deployment.outputs.page_url }}"
