@@ -1,231 +1,165 @@
 #!/usr/bin/env python3
 """
-Live Data Generator for News Agent Dashboard
-Fetches real-time news from NewsAPI and market data from Finnhub & CoinGecko
+News Pulse — Live Headlines Generator
+Fetches general news across 5 categories: Tech, AI, Finance, Business, World.
 """
 
 import os
+import re
 import json
 import requests
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# API Keys from environment variables
 NEWS_API_KEY = os.getenv('NEWS_API_KEY')
-FINNHUB_API_KEY = os.getenv('FINNHUB_API_KEY')
+DATA_DIR = Path(__file__).parent / "data"
 
-DASHBOARD_DIR = Path(__file__).parent / "data"
+CATEGORIES = {
+    'tech': {
+        'query': '("technology" OR "tech industry" OR "Apple" OR "Google" OR "Microsoft" OR "Meta" OR "NVIDIA" OR "Tesla" OR "startup")',
+        'limit': 8
+    },
+    'ai': {
+        'query': '("artificial intelligence" OR "AI" OR "ChatGPT" OR "OpenAI" OR "Anthropic" OR "machine learning" OR "LLM" OR "generative AI")',
+        'limit': 8
+    },
+    'finance': {
+        'query': '("stock market" OR "Federal Reserve" OR "interest rates" OR "inflation" OR "Wall Street" OR "S&P 500" OR "earnings" OR "cryptocurrency" OR "Bitcoin")',
+        'limit': 6
+    },
+    'business': {
+        'query': '("business" OR "corporate" OR "merger" OR "acquisition" OR "IPO" OR "CEO" OR "earnings report" OR "layoffs")',
+        'limit': 6
+    },
+    'world': {
+        'query': '("world news" OR "international" OR "global" OR "geopolitics" OR "diplomacy" OR "United Nations" OR "summit")',
+        'limit': 6
+    }
+}
 
-def fetch_live_news():
-    """Fetch live news from NewsAPI"""
+RELEVANCE_KEYWORDS = {
+    'tech': ['tech', 'technology', 'apple', 'google', 'microsoft', 'meta', 'nvidia', 'tesla', 'startup', 'silicon valley', 'iphone', 'android', 'software', 'hardware'],
+    'ai': ['ai', 'artificial intelligence', 'chatgpt', 'openai', 'anthropic', 'claude', 'machine learning', 'llm', 'generative', 'neural', 'gemini', 'gpt'],
+    'finance': ['stock', 'market', 'fed', 'reserve', 'interest', 'rate', 'inflation', 'wall street', 'sp 500', 'earnings', 'crypto', 'bitcoin', 'investment', 'fund'],
+    'business': ['business', 'corporate', 'merger', 'acquisition', 'ipo', 'ceo', 'earnings', 'layoff', 'company', 'firm', 'revenue', 'profit'],
+    'world': ['world', 'international', 'global', 'geopolitics', 'diplomacy', 'united nations', 'summit', 'foreign', 'country', 'minister', 'president']
+}
+
+
+def is_relevant(article, category):
+    keywords = RELEVANCE_KEYWORDS.get(category, [])
+    if not keywords:
+        return True
+    text = (article.get('title', '') + ' ' + (article.get('description') or '')).lower()
+    return any(kw in text for kw in keywords)
+
+
+def fetch_category_news(category_key, query, limit):
+    if not NEWS_API_KEY:
+        print(f"⚠️  NEWS_API_KEY not set, skipping {category_key}")
+        return []
+
     try:
-        if not NEWS_API_KEY:
-            print("⚠️  NEWS_API_KEY not found, using sample data")
-            return get_sample_news()
+        from_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
 
         url = "https://newsapi.org/v2/everything"
         params = {
-            'q': 'technology OR AI OR finance OR stock market',
+            'q': query,
             'sortBy': 'publishedAt',
             'language': 'en',
-            'pageSize': 10,
+            'pageSize': min(limit * 3, 30),
+            'from': from_date,
             'apiKey': NEWS_API_KEY
         }
 
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, timeout=15)
         response.raise_for_status()
 
         data = response.json()
         articles = data.get('articles', [])
 
-        news_items = []
-        for article in articles[:8]:  # Limit to 8 articles
-            # Categorize based on title/description
-            content = (article.get('title', '') + ' ' + article.get('description', '')).lower()
-            if 'ai' in content or 'machine learning' in content or 'artificial' in content:
-                category = 'ai'
-            elif 'stock' in content or 'market' in content or 'finance' in content or 'bank' in content:
-                category = 'finance'
-            else:
-                category = 'tech'
+        items = []
+        for article in articles:
+            if not article.get('title') or article.get('title') == '[Removed]':
+                continue
+            if not is_relevant(article, category_key):
+                continue
 
-            news_item = {
-                'title': article.get('title', 'News Item')[:100],
-                'source': article.get('source', {}).get('name', 'News Source'),
-                'category': category,
-                'excerpt': article.get('description', article.get('content', ''))[:300],
-                'url': article.get('url', 'https://www.google.com/search?q=news'),
-                'date': datetime.now().strftime('%b %d, %I:%M %p'),
-                'timestamp': datetime.now().isoformat(),
-                'image': article.get('urlToImage')
-            }
-            news_items.append(news_item)
-
-        print(f"✅ Fetched {len(news_items)} live news articles from NewsAPI")
-        return news_items if news_items else get_sample_news()
-
-    except Exception as e:
-        print(f"❌ Error fetching news: {e}")
-        return get_sample_news()
-
-def fetch_live_market_data():
-    """Fetch live market data from Finnhub and CoinGecko"""
-    market_data = []
-
-    try:
-        if not FINNHUB_API_KEY:
-            print("⚠️  FINNHUB_API_KEY not found, using sample market data")
-            return get_sample_market_data()
-
-        # Fetch US Index ETFs from Finnhub (free tier supports stocks/ETFs, not raw indices)
-        indices = [
-            {'symbol': 'SPY', 'name': 'S&P 500'},
-            {'symbol': 'DIA', 'name': 'Dow Jones'},
-            {'symbol': 'QQQ', 'name': 'NASDAQ'}
-        ]
-
-        for index in indices:
+            published_at = article.get('publishedAt', '')
             try:
-                url = f"https://finnhub.io/api/v1/quote"
-                params = {
-                    'symbol': index['symbol'],
-                    'token': FINNHUB_API_KEY
-                }
+                ts = datetime.fromisoformat(published_at.replace('Z', '+00:00')).isoformat()
+            except Exception:
+                ts = datetime.now().isoformat()
 
-                response = requests.get(url, params=params, timeout=5)
-                response.raise_for_status()
-
-                quote = response.json()
-                current_price = quote.get('c', 0)
-                prev_close = quote.get('pc', 0)
-
-                # Skip if data unavailable (Finnhub returns 0 for unsupported symbols)
-                if current_price == 0 or prev_close == 0:
-                    print(f"⚠️  No data available for {index['name']}, skipping")
-                    continue
-
-                change = current_price - prev_close
-                change_percent = (change / prev_close * 100) if prev_close else 0
-
-                market_data.append({
-                    'name': index['name'],
-                    'value': f"{current_price:,.2f}",
-                    'change': f"{change_percent:+.2f}%",
-                    'positive': change_percent >= 0
-                })
-            except Exception as e:
-                print(f"⚠️  Could not fetch {index['name']}: {e}")
-
-        # Fetch Bitcoin price from CoinGecko (no API key needed)
-        try:
-            url = "https://api.coingecko.com/api/v3/simple/price"
-            params = {
-                'ids': 'bitcoin',
-                'vs_currencies': 'usd',
-                'include_24hr_change': 'true'
-            }
-
-            response = requests.get(url, params=params, timeout=5)
-            response.raise_for_status()
-
-            data = response.json()
-            btc_price = data.get('bitcoin', {}).get('usd', 0)
-            btc_change = data.get('bitcoin', {}).get('usd_24h_change', 0)
-
-            market_data.append({
-                'name': 'BTC-USD',
-                'value': f"${btc_price:,.2f}",
-                'change': f"{btc_change:+.2f}%",
-                'positive': btc_change >= 0
+            items.append({
+                'title': article.get('title', '')[:160],
+                'source': article.get('source', {}).get('name', 'Unknown'),
+                'category': category_key,
+                'excerpt': (article.get('description') or article.get('content') or '')[:300],
+                'url': article.get('url', '#'),
+                'image': article.get('urlToImage'),
+                'date': datetime.now().strftime('%b %d, %I:%M %p'),
+                'timestamp': ts,
+                'published_at': published_at
             })
-        except Exception as e:
-            print(f"⚠️  Could not fetch Bitcoin price: {e}")
 
-        print(f"✅ Fetched {len(market_data)} live market prices")
-        return market_data if market_data else get_sample_market_data()
+        items = items[:limit]
+        print(f"✅ {category_key}: {len(items)} relevant stories")
+        return items
 
     except Exception as e:
-        print(f"❌ Error fetching market data: {e}")
-        return get_sample_market_data()
+        print(f"❌ {category_key}: {e}")
+        return []
 
-def get_sample_news():
-    """Fallback sample news data"""
-    now = datetime.now()
-    return [
-        {
-            "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
-            "source": "TechCrunch",
-            "category": "ai",
-            "excerpt": "OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities...",
-            "url": "https://techcrunch.com/2024/03/13/openai-gpt-5-announcement/",
-            "date": now.strftime('%b %d, %I:%M %p'),
-            "timestamp": now.isoformat()
-        },
-        {
-            "title": "Federal Reserve Signals Interest Rate Cut",
-            "source": "Reuters",
-            "category": "finance",
-            "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation cools...",
-            "url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2024-03-13/",
-            "date": now.strftime('%b %d, %I:%M %p'),
-            "timestamp": now.isoformat()
-        },
-        {
-            "title": "Tesla Stock Surges on FSD Breakthrough",
-            "source": "Bloomberg",
-            "category": "finance",
-            "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...",
-            "url": "https://www.bloomberg.com/news/articles/2024-03-13/tesla-fsd-beta-12-approval/",
-            "date": now.strftime('%b %d, %I:%M %p'),
-            "timestamp": now.isoformat()
-        },
-        {
-            "title": "NVIDIA Unveils Next-Gen AI Chips",
-            "source": "VentureBeat",
-            "category": "tech",
-            "excerpt": "The new Blackwell architecture promises 10x performance improvements...",
-            "url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2024/",
-            "date": now.strftime('%b %d, %I:%M %p'),
-            "timestamp": now.isoformat()
-        }
-    ]
 
-def get_sample_market_data():
-    """Fallback sample market data"""
-    return [
-        {"name": "S&P 500", "value": "5,234.18", "change": "+1.24%", "positive": True},
-        {"name": "Dow Jones", "value": "41,087.13", "change": "+0.89%", "positive": True},
-        {"name": "NASDAQ", "value": "16,447.20", "change": "+1.42%", "positive": True},
-        {"name": "BTC-USD", "value": "$67,234.50", "change": "-2.15%", "positive": False}
-    ]
+def deduplicate(articles):
+    seen_urls = set()
+    seen_titles = set()
+    unique = []
+    for article in articles:
+        url = article['url']
+        norm_title = re.sub(r'[^\w\s]', '', (article['title'] or '').lower()).strip()
+        norm_title = re.sub(r'\s+', ' ', norm_title)
 
-def generate_dashboard_data():
-    """Generate all dashboard data with live APIs"""
-    DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
+        if url in seen_urls or (norm_title and norm_title in seen_titles):
+            continue
+        seen_urls.add(url)
+        if norm_title:
+            seen_titles.add(norm_title)
+        unique.append(article)
+    return unique
 
-    # Fetch live news
-    print("🚀 Fetching live news...")
-    news_data = fetch_live_news()
 
-    # Export news
-    news_file = DASHBOARD_DIR / "news.json"
-    with open(news_file, 'w') as f:
-        json.dump(news_data, f, indent=2)
-    print(f"✅ News data saved to {news_file}")
+def generate_news():
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Fetch live market data
-    print("📈 Fetching live market data...")
-    market_data = fetch_live_market_data()
+    all_articles = []
+    for category_key, config in CATEGORIES.items():
+        articles = fetch_category_news(category_key, config['query'], config['limit'])
+        all_articles.extend(articles)
 
-    # Export market data
-    market_file = DASHBOARD_DIR / "market.json"
-    with open(market_file, 'w') as f:
-        json.dump(market_data, f, indent=2)
-    print(f"✅ Market data saved to {market_file}")
+    unique = deduplicate(all_articles)
+    unique.sort(key=lambda x: x.get('published_at', ''), reverse=True)
 
-    return news_data, market_data
+    output_file = DATA_DIR / "news.json"
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(unique, f, indent=2, ensure_ascii=False)
+
+    print(f"\n📊 Total: {len(unique)} unique stories saved")
+
+    breakdown = {}
+    for article in unique:
+        cat = article['category']
+        breakdown[cat] = breakdown.get(cat, 0) + 1
+
+    print("\n📂 Breakdown:")
+    for cat, count in sorted(breakdown.items()):
+        print(f"   {cat}: {count}")
+
+    return unique
+
 
 if __name__ == "__main__":
-    print("🌍 Generating dashboard data with live APIs...")
-    generate_dashboard_data()
-    print("✅ Done!")
+    print("📰 News Pulse — fetching live headlines...\n")
+    generate_news()
+    print("\n✅ Done!")

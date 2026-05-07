@@ -1,269 +1,185 @@
-// News Agent Dashboard - Live Data Edition
-// Fetches data from data/news.json and data/market.json (auto-updated by GitHub Actions)
+// News Pulse Dashboard
+// Fetches live news from data/news.json (auto-updated by GitHub Actions)
 
 let allNews = [];
-let marketData = [];
-let categoryChart = null;
+let activeFilter = 'all';
 
-// Fetch live data from JSON files (cache-busted with timestamp)
 async function fetchLiveData() {
   const cacheBust = `?t=${Date.now()}`;
-
   try {
-    const [newsRes, marketRes] = await Promise.all([
-      fetch(`data/news.json${cacheBust}`, { cache: 'no-store' }),
-      fetch(`data/market.json${cacheBust}`, { cache: 'no-store' })
-    ]);
-
-    if (!newsRes.ok || !marketRes.ok) {
-      throw new Error('Failed to fetch data files');
-    }
-
-    allNews = await newsRes.json();
-    marketData = await marketRes.json();
-
-    console.log(`✅ Loaded ${allNews.length} news items and ${marketData.length} market prices`);
+    const res = await fetch(`data/news.json${cacheBust}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    allNews = await res.json();
+    console.log(`✅ Loaded ${allNews.length} stories`);
     return true;
   } catch (err) {
-    console.error('❌ Failed to load live data:', err);
+    console.error('❌ Failed to load news:', err);
     return false;
   }
 }
 
-// Render market cards
-function renderMarketCards(data) {
-  const container = document.getElementById('marketCards');
-  if (!data || data.length === 0) {
-    container.innerHTML = '<div class="loading">Loading market data...</div>';
-    return;
-  }
-  container.innerHTML = data.map(stock => `
-    <div class="market-card">
-      <h3>${stock.name}</h3>
-      <div class="value">${stock.value}</div>
-      <span class="change ${stock.positive ? 'positive' : 'negative'}">
-        ${stock.positive ? '↑' : '↓'} ${stock.change}
-      </span>
-    </div>
-  `).join('');
+function getCategoryEmoji(category) {
+  const emojis = {
+    'tech': '💻',
+    'ai': '🤖',
+    'finance': '📈',
+    'business': '💼',
+    'world': '🌍'
+  };
+  return emojis[category] || '📰';
 }
 
-// Render news grid
-function renderNews(news, filter = 'all') {
-  const container = document.getElementById('newsGrid');
-  if (!news || news.length === 0) {
-    container.innerHTML = '<div class="loading">Loading news...</div>';
-    return;
-  }
+function getCategoryLabel(category) {
+  const labels = {
+    'tech': 'Tech',
+    'ai': 'AI',
+    'finance': 'Finance',
+    'business': 'Business',
+    'world': 'World'
+  };
+  return labels[category] || category;
+}
 
-  const filtered = filter === 'all' ? news : news.filter(n => n.category === filter);
+function formatDate(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderNews(filter = 'all') {
+  const container = document.getElementById('newsGrid');
+  const emptyState = document.getElementById('emptyState');
+
+  const filtered = filter === 'all' ? allNews : allNews.filter(n => n.category === filter);
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div class="loading">No news found for this category</div>';
+    container.innerHTML = '';
+    emptyState.classList.remove('hidden');
     return;
   }
 
+  emptyState.classList.add('hidden');
   container.innerHTML = '';
 
-  filtered.forEach(item => {
-    const newsCard = document.createElement('div');
-    newsCard.className = 'news-card';
+  filtered.forEach((item, idx) => {
+    const card = document.createElement('article');
+    card.className = 'news-card';
+    card.style.animation = `fadeInUp 0.4s ease ${idx * 0.04}s backwards`;
 
-    // Support both new (url) and legacy (full_url) data formats
     const articleUrl = item.url || item.full_url || '#';
+    const imageHtml = item.image
+      ? `<div class="news-image"><img src="${escapeHtml(item.image)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'news-image-placeholder\\'>${getCategoryEmoji(item.category)}</div>'"></div>`
+      : `<div class="news-image"><div class="news-image-placeholder">${getCategoryEmoji(item.category)}</div></div>`;
 
-    const link = document.createElement('a');
-    link.href = articleUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.className = 'news-link';
-    link.textContent = item.title;
-
-    newsCard.innerHTML = `
-      <h3></h3>
-      <div class="news-meta">
-        <span class="news-tag"></span>
-        <span></span>
+    card.innerHTML = `
+      ${imageHtml}
+      <div class="news-body">
+        <div class="news-meta">
+          <span class="news-tag ${escapeHtml(item.category || '')}">${escapeHtml(getCategoryLabel(item.category))}</span>
+          <span class="news-source">${escapeHtml(item.source || 'Unknown')}</span>
+        </div>
+        <h3 class="news-title">
+          <a href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer">
+            ${escapeHtml(item.title || 'Untitled')}
+          </a>
+        </h3>
+        <p class="news-excerpt">${escapeHtml(item.excerpt || '')}</p>
+        <div class="news-footer">
+          <span class="news-date">${escapeHtml(formatDate(item.timestamp))}</span>
+          <a href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer" class="news-read-more">
+            Read more →
+          </a>
+        </div>
       </div>
-      <p class="news-excerpt"></p>
-      <div class="news-date"></div>
     `;
 
-    newsCard.querySelector('h3').appendChild(link);
-    newsCard.querySelector('.news-tag').textContent = (item.category || 'NEWS').toUpperCase();
-    newsCard.querySelector('.news-meta').children[1].textContent = '• ' + (item.source || 'Unknown');
-    newsCard.querySelector('.news-excerpt').textContent = item.excerpt || '';
-    newsCard.querySelector('.news-date').textContent = item.date || '';
-
-    container.appendChild(newsCard);
+    container.appendChild(card);
   });
 
-  console.log(`📰 Rendered ${filtered.length} news items`);
+  console.log(`📰 Rendered ${filtered.length} stories`);
 }
 
-function renderCategoryChart() {
-  const ctx = document.getElementById('categoryChart');
-  if (!ctx) return;
-
-  const categoryCounts = {};
-  allNews.forEach(news => {
-    const cat = news.category || 'other';
-    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-  });
-
-  if (categoryChart) {
-    categoryChart.destroy();
-  }
-
-  categoryChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(categoryCounts),
-      datasets: [{
-        data: Object.values(categoryCounts),
-        backgroundColor: ['#6366f1', '#06b6d4', '#f59e0b', '#10b981'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { color: '#94a3b8', padding: 15 }
-        }
-      },
-      animation: { animateScale: true, animateRotate: true }
-    }
-  });
-}
-
-function renderTimelineChart() {
-  const container = document.getElementById('timelineChart');
-  if (!container) return;
-
-  const hourCounts = {};
-  allNews.forEach(news => {
-    if (!news.timestamp) return;
-    const date = new Date(news.timestamp);
-    const hour = date.toISOString().slice(0, 13);
-    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-  });
-
-  const labels = Object.keys(hourCounts).sort();
-  const data = labels.map(h => hourCounts[h]);
-
-  container.innerHTML = '';
-
-  if (labels.length === 0) {
-    container.innerHTML = '<div class="loading">No timeline data available</div>';
-    return;
-  }
-
-  const width = container.clientWidth || 400;
-  const height = 300;
-  const margin = { top: 20, right: 20, bottom: 40, left: 50 };
-
-  const svg = d3.select(container).append('svg')
-    .attr('width', width).attr('height', height);
-
-  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-  const x = d3.scaleBand()
-    .domain(labels)
-    .range([0, width - margin.left - margin.right])
-    .padding(0.2);
-
-  const y = d3.scaleLinear()
-    .domain([0, Math.max(...data) + 1])
-    .range([height - margin.top - margin.bottom, 0]);
-
-  g.append('g')
-    .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
-    .call(d3.axisBottom(x))
-    .selectAll('text')
-    .style('fill', '#94a3b8')
-    .attr('transform', 'rotate(-45)')
-    .style('text-anchor', 'end');
-
-  g.append('g').call(d3.axisLeft(y))
-    .selectAll('text').style('fill', '#94a3b8');
-
-  g.selectAll('.bar')
-    .data(data).enter().append('rect')
-    .attr('class', 'bar')
-    .attr('x', (d, i) => x(labels[i]))
-    .attr('y', d => y(d))
-    .attr('width', x.bandwidth())
-    .attr('height', d => height - margin.top - margin.bottom - y(d))
-    .attr('fill', '#6366f1');
-}
-
-function renderCharts() {
-  renderCategoryChart();
-  renderTimelineChart();
+function updateStats() {
+  document.getElementById('totalArticles').textContent = allNews.length;
+  const sources = new Set(allNews.map(n => n.source).filter(Boolean));
+  document.getElementById('totalSources').textContent = sources.size;
 }
 
 function updateLastUpdateTime() {
   const now = new Date();
   document.getElementById('lastUpdate').textContent =
-    `Last updated: ${now.toLocaleString('en-US', {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    })}`;
+    `Updated ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-// Refresh button - re-fetches live data
-async function loadData() {
+async function refreshData() {
   const btn = document.querySelector('.refresh-btn');
-  const originalText = btn.textContent;
-  btn.textContent = '⟳ Refreshing...';
-  btn.disabled = true;
+  btn.classList.add('loading');
 
   const success = await fetchLiveData();
   if (success) {
-    renderMarketCards(marketData);
-    renderNews(allNews, getActiveFilter());
-    renderCharts();
+    renderNews(activeFilter);
+    updateStats();
     updateLastUpdateTime();
   }
 
-  btn.textContent = originalText;
-  btn.disabled = false;
+  setTimeout(() => btn.classList.remove('loading'), 500);
 }
 
-function getActiveFilter() {
-  const activeTab = document.querySelector('.tab.active');
-  return activeTab ? activeTab.dataset.category : 'all';
-}
-
-// Tab filtering
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    renderNews(allNews, tab.dataset.category);
+// Filter chip handlers
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.category;
+    renderNews(activeFilter);
   });
 });
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 Dashboard initializing — fetching live data...');
+  console.log('📰 News Pulse initializing...');
 
   await fetchLiveData();
-
-  renderMarketCards(marketData);
-  renderNews(allNews);
-  renderCharts();
+  renderNews();
+  updateStats();
   updateLastUpdateTime();
 
   // Auto-refresh every 5 minutes
   setInterval(async () => {
-    console.log('🔄 Auto-refreshing live data...');
+    console.log('🔄 Auto-refresh');
     await fetchLiveData();
-    renderMarketCards(marketData);
-    renderNews(allNews, getActiveFilter());
-    renderCharts();
+    renderNews(activeFilter);
+    updateStats();
     updateLastUpdateTime();
   }, 300000);
 });
+
+// Card animation styles
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+document.head.appendChild(style);

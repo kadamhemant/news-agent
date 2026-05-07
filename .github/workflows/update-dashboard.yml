@@ -1,12 +1,11 @@
-name: Deploy News Dashboard
+name: Deploy News Pulse
 
 on:
   schedule:
-    # Run every 6 hours to fetch fresh data
     - cron: '0 */6 * * *'
-    # Also at midnight UTC daily
-    - cron: '0 0 * * *'
-  workflow_dispatch: # Allows manual trigger anytime
+  workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -38,10 +37,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Generate Fresh Data from APIs
+      - name: Fetch live headlines
         env:
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: python generate_data.py
 
       - name: Setup Pages
@@ -58,7 +56,5 @@ jobs:
 
       - name: Success notification
         run: |
-          echo "🎉 Dashboard deployed successfully with live data!"
+          echo "📰 News Pulse deployed!"
           echo "📊 URL: ${{ steps.deployment.outputs.page_url }}"
-          echo "📰 News API: NewsAPI.org"
-          echo "📈 Market API: Finnhub.io + CoinGecko"
