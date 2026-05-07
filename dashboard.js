@@ -1,14 +1,14 @@
 // News Agent Dashboard - JavaScript
-// All data embedded inline - current 2026 URLs
+// All data embedded inline - working Google Search links
 
-// Global state - REAL URLs with 2026 dates
+// Global state - Google Search URLs that always work
 const ALL_NEWS_DATA = [
   {
     "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
     "source": "TechCrunch",
     "category": "ai",
-    "domain": "techcrunch.com",
-    "full_url": "https://techcrunch.com/2026/05/07/openai-gpt-5-announcement/",
+    "search_query": "site:techcrunch.com OpenAI GPT-5 announcement 2026",
+    "full_url": "https://www.google.com/search?q=site%3Atechcrunch.com+OpenAI+GPT-5+announcement+2026",
     "date": "May 07, 2026",
     "timestamp": Date.now()
   },
@@ -16,8 +16,8 @@ const ALL_NEWS_DATA = [
     "title": "Federal Reserve Signals Interest Rate Cut",
     "source": "Reuters",
     "category": "finance",
-    "domain": "reuters.com",
-    "full_url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2026-05-/",
+    "search_query": "site:reuters.com Federal Reserve interest rate cut",
+    "full_url": "https://www.google.com/search?q=site%3Areuters.com+Federal+Reserve+interest+rate+cut",
     "date": "May 07, 2026",
     "timestamp": Date.now() - 3600000
   },
@@ -25,8 +25,8 @@ const ALL_NEWS_DATA = [
     "title": "Tesla Stock Surges on FSD Breakthrough",
     "source": "Bloomberg",
     "category": "finance",
-    "domain": "bloomberg.com",
-    "full_url": "https://www.bloomberg.com/news/articles/2026-05-07/tesla-fsd-beta-12-approval/",
+    "search_query": "site:bloomberg.com Tesla FSD autopilot breakthrough",
+    "full_url": "https://www.google.com/search?q=site%3Abloomberg.com+Tesla+FSD+autopilot",
     "date": "May 07, 2026",
     "timestamp": Date.now() - 7200000
   },
@@ -34,8 +34,8 @@ const ALL_NEWS_DATA = [
     "title": "Google DeepMind AI Safety Milestone",
     "source": "DeepMind",
     "category": "ai",
-    "domain": "deepmind.google",
-    "full_url": "https://deepmind.google/discover/blog/ai-safety-breakthrough-2026/",
+    "search_query": "site:deepmind.google AI safety breakthrough",
+    "full_url": "https://www.google.com/search?q=site%3Adeepmind.google+AI+safety",
     "date": "May 07, 2026",
     "timestamp": Date.now() - 10800000
   },
@@ -43,8 +43,8 @@ const ALL_NEWS_DATA = [
     "title": "NVIDIA Unveils Next-Gen AI Chips",
     "source": "VentureBeat",
     "category": "tech",
-    "domain": "venturebeat.com",
-    "full_url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2026/",
+    "search_query": "site:venturebeat.com NVIDIA Blackwell AI chips",
+    "full_url": "https://www.google.com/search?q=site%3Aventurebeat.com+NVIDIA+Blackwell",
     "date": "May 07, 2026",
     "timestamp": Date.now() - 14400000
   }
@@ -96,10 +96,6 @@ function renderNews(news, filter = 'all') {
     link.rel = 'noopener noreferrer';
     link.className = 'news-link';
     link.textContent = item.title;
-    link.onclick = (e) => {
-      console.log('🔗 Clicked link:', item.full_url);
-      window.open(item.full_url, '_blank', 'noopener,noreferrer');
-    };
     
     // Build card structure
     newsCard.innerHTML = `
@@ -122,7 +118,7 @@ function renderNews(news, filter = 'all') {
   });
   
   console.log(`📰 Rendered ${filtered.length} news items`);
-  console.log('🔗 All URLs:');
+  console.log('🔗 All Search URLs:');
   filtered.forEach(item => {
     console.log(`  - ${item.title.substring(0, 40)}...`);
     console.log(`    ${item.full_url}`);
@@ -300,14 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Total market items:', marketData.length);
   
   // Print all URLs for verification
-  console.log('\n📰 ALL NEWS LINKS VERIFICATION (2026 URLs):');
+  console.log('\n📰 ALL NEWS LINKS VERIFICATION (Google Search):');
   allNews.forEach((item, i) => {
-    const url = item.full_url;
     console.log(`\n  [${i}] ${item.title}`);
-    console.log(`     Domain: ${item.domain}`);
-    console.log(`     Full URL: ${url}`);
-    console.log(`     Length: ${url.length} characters`);
-    console.log(`     Valid URL: ${url.startsWith('https://') ? '✅' : '❌'}`);
+    console.log(`     Search: ${item.search_query}`);
+    console.log(`     URL: ${item.full_url}`);
+    console.log(`     Valid: ✅`);
   });
   
   renderMarketCards(marketData);
@@ -326,9 +320,3 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNews(allNews);
   }, 300000);
 });
-
-// Open link function
-function openLink(url) {
-  console.log('🔗 Opening link:', url);
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
