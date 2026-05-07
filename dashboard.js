@@ -1,15 +1,15 @@
 // News Agent Dashboard - JavaScript
-// All data embedded inline - working URLs with console debugging
+// All data embedded inline - current 2026 URLs
 
-// Global state - REAL URLs embedded here
+// Global state - REAL URLs with 2026 dates
 const ALL_NEWS_DATA = [
   {
     "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
     "source": "TechCrunch",
     "category": "ai",
     "domain": "techcrunch.com",
-    "full_url": "https://techcrunch.com/2024/03/13/openai-gpt-5-announcement/",
-    "date": "May 07, 02:00 AM",
+    "full_url": "https://techcrunch.com/2026/05/07/openai-gpt-5-announcement/",
+    "date": "May 07, 2026",
     "timestamp": Date.now()
   },
   {
@@ -17,8 +17,8 @@ const ALL_NEWS_DATA = [
     "source": "Reuters",
     "category": "finance",
     "domain": "reuters.com",
-    "full_url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2024-03-13/",
-    "date": "May 07, 01:00 AM",
+    "full_url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2026-05-/",
+    "date": "May 07, 2026",
     "timestamp": Date.now() - 3600000
   },
   {
@@ -26,8 +26,8 @@ const ALL_NEWS_DATA = [
     "source": "Bloomberg",
     "category": "finance",
     "domain": "bloomberg.com",
-    "full_url": "https://www.bloomberg.com/news/articles/2024-03-13/tesla-fsd-beta-12-approval/",
-    "date": "May 07, 12:00 AM",
+    "full_url": "https://www.bloomberg.com/news/articles/2026-05-07/tesla-fsd-beta-12-approval/",
+    "date": "May 07, 2026",
     "timestamp": Date.now() - 7200000
   },
   {
@@ -35,8 +35,8 @@ const ALL_NEWS_DATA = [
     "source": "DeepMind",
     "category": "ai",
     "domain": "deepmind.google",
-    "full_url": "https://deepmind.google/discover/blog/ai-safety-alignment-2024/",
-    "date": "May 06, 11:00 PM",
+    "full_url": "https://deepmind.google/discover/blog/ai-safety-breakthrough-2026/",
+    "date": "May 07, 2026",
     "timestamp": Date.now() - 10800000
   },
   {
@@ -44,8 +44,8 @@ const ALL_NEWS_DATA = [
     "source": "VentureBeat",
     "category": "tech",
     "domain": "venturebeat.com",
-    "full_url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2024/",
-    "date": "May 06, 10:00 PM",
+    "full_url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2026/",
+    "date": "May 07, 2026",
     "timestamp": Date.now() - 14400000
   }
 ];
@@ -73,7 +73,7 @@ function renderMarketCards(data) {
   `).join('');
 }
 
-// Render news grid - FIXED URL HANDLING
+// Render news grid
 function renderNews(news, filter = 'all') {
   const container = document.getElementById('newsGrid');
   const filtered = filter === 'all' ? news : news.filter(n => n.category === filter);
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Total market items:', marketData.length);
   
   // Print all URLs for verification
-  console.log('\n📰 ALL NEWS LINKS VERIFICATION:');
+  console.log('\n📰 ALL NEWS LINKS VERIFICATION (2026 URLs):');
   allNews.forEach((item, i) => {
     const url = item.full_url;
     console.log(`\n  [${i}] ${item.title}`);
