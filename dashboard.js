@@ -8,7 +8,7 @@ let allNews = [
     "source": "TechCrunch",
     "category": "ai",
     "excerpt": "OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities and multi-modal understanding...",
-    "url": "https://techcrunch.com",
+    "url": "https://www.google.com/search?q=OpenAI+GPT-5+announcement+site:techcrunch.com",
     "date": "May 07, 02:27 AM",
     "timestamp": Date.now()
   },
@@ -17,7 +17,7 @@ let allNews = [
     "source": "Reuters",
     "category": "finance",
     "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation shows signs of cooling...",
-    "url": "https://reuters.com",
+    "url": "https://www.google.com/search?q=Federal+Reserve+interest+rate+cut+site:reuters.com",
     "date": "May 07, 01:27 AM",
     "timestamp": Date.now() - 3600000
   },
@@ -26,7 +26,7 @@ let allNews = [
     "source": "Bloomberg",
     "category": "finance",
     "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements in complex driving scenarios...",
-    "url": "https://bloomberg.com",
+    "url": "https://www.google.com/search?q=Tesla+FSD+Autopilot+site:bloomberg.com",
     "date": "May 07, 12:27 AM",
     "timestamp": Date.now() - 7200000
   },
@@ -35,7 +35,7 @@ let allNews = [
     "source": "AI Research Blog",
     "category": "ai",
     "excerpt": "New alignment techniques demonstrate 95% reduction in undesirable model behaviors...",
-    "url": "https://deepmind.com",
+    "url": "https://www.google.com/search?q=DeepMind+AI+safety+alignment+site:deepmind.com",
     "date": "May 06, 11:27 PM",
     "timestamp": Date.now() - 10800000
   },
@@ -44,7 +44,7 @@ let allNews = [
     "source": "VentureBeat",
     "category": "tech",
     "excerpt": "The new Blackwell architecture promises 10x performance improvements for LLM training...",
-    "url": "https://venturebeat.com",
+    "url": "https://www.google.com/search?q=NVIDIA+Blackwell+AI+chips+LLM+site:venturebeat.com",
     "date": "May 06, 10:27 PM",
     "timestamp": Date.now() - 14400000
   }
@@ -98,7 +98,7 @@ function renderNews(news, filter = 'all') {
   container.innerHTML = filtered.map(item => `
     <div class="news-card">
       <h3>
-        <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="news-link">${item.title}</a>
       </h3>
       <div class="news-meta">
         <span class="news-tag">${item.category.toUpperCase()}</span>
@@ -109,6 +109,20 @@ function renderNews(news, filter = 'all') {
     </div>
   `).join('');
 }
+
+// Add some inline CSS for better link appearance
+const linkStyle = document.createElement('style');
+linkStyle.textContent = `
+  .news-link {
+    color: #6366f1;
+    transition: color 0.2s;
+  }
+  .news-link:hover {
+    color: #4f46e5;
+    text-decoration: underline;
+  }
+`;
+document.head.appendChild(linkStyle);
 
 // Render charts
 let categoryChart = null;
