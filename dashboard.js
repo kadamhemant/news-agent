@@ -1,67 +1,42 @@
-// News Agent Dashboard - JavaScript
-// All data embedded inline - working Google Search links
+// News Agent Dashboard - Live Data Edition
+// Fetches data from data/news.json and data/market.json (auto-updated by GitHub Actions)
 
-// Global state - Google Search URLs that always work
-const ALL_NEWS_DATA = [
-  {
-    "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
-    "source": "TechCrunch",
-    "category": "ai",
-    "search_query": "site:techcrunch.com OpenAI GPT-5 announcement 2026",
-    "full_url": "https://www.google.com/search?q=site%3Atechcrunch.com+OpenAI+GPT-5+announcement+2026",
-    "date": "May 07, 2026",
-    "timestamp": Date.now()
-  },
-  {
-    "title": "Federal Reserve Signals Interest Rate Cut",
-    "source": "Reuters",
-    "category": "finance",
-    "search_query": "site:reuters.com Federal Reserve interest rate cut",
-    "full_url": "https://www.google.com/search?q=site%3Areuters.com+Federal+Reserve+interest+rate+cut",
-    "date": "May 07, 2026",
-    "timestamp": Date.now() - 3600000
-  },
-  {
-    "title": "Tesla Stock Surges on FSD Breakthrough",
-    "source": "Bloomberg",
-    "category": "finance",
-    "search_query": "site:bloomberg.com Tesla FSD autopilot breakthrough",
-    "full_url": "https://www.google.com/search?q=site%3Abloomberg.com+Tesla+FSD+autopilot",
-    "date": "May 07, 2026",
-    "timestamp": Date.now() - 7200000
-  },
-  {
-    "title": "Google DeepMind AI Safety Milestone",
-    "source": "DeepMind",
-    "category": "ai",
-    "search_query": "site:deepmind.google AI safety breakthrough",
-    "full_url": "https://www.google.com/search?q=site%3Adeepmind.google+AI+safety",
-    "date": "May 07, 2026",
-    "timestamp": Date.now() - 10800000
-  },
-  {
-    "title": "NVIDIA Unveils Next-Gen AI Chips",
-    "source": "VentureBeat",
-    "category": "tech",
-    "search_query": "site:venturebeat.com NVIDIA Blackwell AI chips",
-    "full_url": "https://www.google.com/search?q=site%3Aventurebeat.com+NVIDIA+Blackwell",
-    "date": "May 07, 2026",
-    "timestamp": Date.now() - 14400000
+let allNews = [];
+let marketData = [];
+let categoryChart = null;
+
+// Fetch live data from JSON files (cache-busted with timestamp)
+async function fetchLiveData() {
+  const cacheBust = `?t=${Date.now()}`;
+
+  try {
+    const [newsRes, marketRes] = await Promise.all([
+      fetch(`data/news.json${cacheBust}`, { cache: 'no-store' }),
+      fetch(`data/market.json${cacheBust}`, { cache: 'no-store' })
+    ]);
+
+    if (!newsRes.ok || !marketRes.ok) {
+      throw new Error('Failed to fetch data files');
+    }
+
+    allNews = await newsRes.json();
+    marketData = await marketRes.json();
+
+    console.log(`✅ Loaded ${allNews.length} news items and ${marketData.length} market prices`);
+    return true;
+  } catch (err) {
+    console.error('❌ Failed to load live data:', err);
+    return false;
   }
-];
-
-// Clone data to avoid mutation
-let allNews = JSON.parse(JSON.stringify(ALL_NEWS_DATA));
-let marketData = [
-  { "name": "S&P 500", "value": "5,234.18", "change": "+1.24%", "positive": true },
-  { "name": "Dow Jones", "value": "41,087.13", "change": "+0.89%", "positive": true },
-  { "name": "NASDAQ", "value": "16,447.20", "change": "+1.42%", "positive": true },
-  { "name": "BTC-USD", "value": "$67,234.50", "change": "-2.15%", "positive": false }
-];
+}
 
 // Render market cards
 function renderMarketCards(data) {
   const container = document.getElementById('marketCards');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="loading">Loading market data...</div>';
+    return;
+  }
   container.innerHTML = data.map(stock => `
     <div class="market-card">
       <h3>${stock.name}</h3>
@@ -76,28 +51,34 @@ function renderMarketCards(data) {
 // Render news grid
 function renderNews(news, filter = 'all') {
   const container = document.getElementById('newsGrid');
+  if (!news || news.length === 0) {
+    container.innerHTML = '<div class="loading">Loading news...</div>';
+    return;
+  }
+
   const filtered = filter === 'all' ? news : news.filter(n => n.category === filter);
-  
+
   if (filtered.length === 0) {
     container.innerHTML = '<div class="loading">No news found for this category</div>';
     return;
   }
-  
+
   container.innerHTML = '';
-  
+
   filtered.forEach(item => {
     const newsCard = document.createElement('div');
     newsCard.className = 'news-card';
-    
-    // Create link element
+
+    // Support both new (url) and legacy (full_url) data formats
+    const articleUrl = item.url || item.full_url || '#';
+
     const link = document.createElement('a');
-    link.href = item.full_url;
+    link.href = articleUrl;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.className = 'news-link';
     link.textContent = item.title;
-    
-    // Build card structure
+
     newsCard.innerHTML = `
       <h3></h3>
       <div class="news-meta">
@@ -107,46 +88,33 @@ function renderNews(news, filter = 'all') {
       <p class="news-excerpt"></p>
       <div class="news-date"></div>
     `;
-    
+
     newsCard.querySelector('h3').appendChild(link);
-    newsCard.querySelector('.news-tag').textContent = item.category.toUpperCase();
-    newsCard.querySelector('.news-meta').children[1].textContent = '• ' + item.source;
-    newsCard.querySelector('.news-excerpt').textContent = item.excerpt;
-    newsCard.querySelector('.news-date').textContent = item.date;
-    
+    newsCard.querySelector('.news-tag').textContent = (item.category || 'NEWS').toUpperCase();
+    newsCard.querySelector('.news-meta').children[1].textContent = '• ' + (item.source || 'Unknown');
+    newsCard.querySelector('.news-excerpt').textContent = item.excerpt || '';
+    newsCard.querySelector('.news-date').textContent = item.date || '';
+
     container.appendChild(newsCard);
   });
-  
+
   console.log(`📰 Rendered ${filtered.length} news items`);
-  console.log('🔗 All Search URLs:');
-  filtered.forEach(item => {
-    console.log(`  - ${item.title.substring(0, 40)}...`);
-    console.log(`    ${item.full_url}`);
-  });
-}
-
-// Render charts
-let categoryChart = null;
-let timelineChart = null;
-
-function renderCharts() {
-  renderCategoryChart();
-  renderTimelineChart();
 }
 
 function renderCategoryChart() {
   const ctx = document.getElementById('categoryChart');
   if (!ctx) return;
-  
+
   const categoryCounts = {};
   allNews.forEach(news => {
-    categoryCounts[news.category] = (categoryCounts[news.category] || 0) + 1;
+    const cat = news.category || 'other';
+    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
   });
-  
+
   if (categoryChart) {
     categoryChart.destroy();
   }
-  
+
   categoryChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -166,10 +134,7 @@ function renderCategoryChart() {
           labels: { color: '#94a3b8', padding: 15 }
         }
       },
-      animation: {
-        animateScale: true,
-        animateRotate: true
-      }
+      animation: { animateScale: true, animateRotate: true }
     }
   });
 }
@@ -177,40 +142,43 @@ function renderCategoryChart() {
 function renderTimelineChart() {
   const container = document.getElementById('timelineChart');
   if (!container) return;
-  
+
   const hourCounts = {};
   allNews.forEach(news => {
+    if (!news.timestamp) return;
     const date = new Date(news.timestamp);
     const hour = date.toISOString().slice(0, 13);
     hourCounts[hour] = (hourCounts[hour] || 0) + 1;
   });
-  
+
   const labels = Object.keys(hourCounts).sort();
   const data = labels.map(h => hourCounts[h]);
-  
+
   container.innerHTML = '';
-  
+
+  if (labels.length === 0) {
+    container.innerHTML = '<div class="loading">No timeline data available</div>';
+    return;
+  }
+
   const width = container.clientWidth || 400;
   const height = 300;
   const margin = { top: 20, right: 20, bottom: 40, left: 50 };
-  
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height);
-  
-  const g = svg.append('g')
-    .attr('transform', `translate(${margin.left},${margin.top})`);
-  
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', width).attr('height', height);
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
   const x = d3.scaleBand()
     .domain(labels)
     .range([0, width - margin.left - margin.right])
     .padding(0.2);
-  
+
   const y = d3.scaleLinear()
     .domain([0, Math.max(...data) + 1])
     .range([height - margin.top - margin.bottom, 0]);
-  
+
   g.append('g')
     .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
     .call(d3.axisBottom(x))
@@ -218,48 +186,55 @@ function renderTimelineChart() {
     .style('fill', '#94a3b8')
     .attr('transform', 'rotate(-45)')
     .style('text-anchor', 'end');
-  
-  g.append('g')
-    .call(d3.axisLeft(y))
-    .selectAll('text')
-    .style('fill', '#94a3b8');
-  
+
+  g.append('g').call(d3.axisLeft(y))
+    .selectAll('text').style('fill', '#94a3b8');
+
   g.selectAll('.bar')
-    .data(data)
-    .enter()
-    .append('rect')
+    .data(data).enter().append('rect')
     .attr('class', 'bar')
     .attr('x', (d, i) => x(labels[i]))
     .attr('y', d => y(d))
     .attr('width', x.bandwidth())
     .attr('height', d => height - margin.top - margin.bottom - y(d))
-    .attr('fill', '#6366f1')
-    .on('mouseover', function() {
-      d3.select(this).attr('fill', '#4f46e5');
-    })
-    .on('mouseout', function() {
-      d3.select(this).attr('fill', '#6366f1');
-    });
-  
-  g.append('text')
-    .attr('x', width / 2)
-    .attr('y', -10)
-    .attr('text-anchor', 'middle')
-    .style('fill', '#94a3b8')
-    .style('font-size', '12px')
-    .text('News Posts per Hour');
+    .attr('fill', '#6366f1');
 }
 
-// Update last update time
+function renderCharts() {
+  renderCategoryChart();
+  renderTimelineChart();
+}
+
 function updateLastUpdateTime() {
   const now = new Date();
-  document.getElementById('lastUpdate').textContent = 
-    `Last updated: ${now.toLocaleString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+  document.getElementById('lastUpdate').textContent =
+    `Last updated: ${now.toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     })}`;
+}
+
+// Refresh button - re-fetches live data
+async function loadData() {
+  const btn = document.querySelector('.refresh-btn');
+  const originalText = btn.textContent;
+  btn.textContent = '⟳ Refreshing...';
+  btn.disabled = true;
+
+  const success = await fetchLiveData();
+  if (success) {
+    renderMarketCards(marketData);
+    renderNews(allNews, getActiveFilter());
+    renderCharts();
+    updateLastUpdateTime();
+  }
+
+  btn.textContent = originalText;
+  btn.disabled = false;
+}
+
+function getActiveFilter() {
+  const activeTab = document.querySelector('.tab.active');
+  return activeTab ? activeTab.dataset.category : 'all';
 }
 
 // Tab filtering
@@ -267,56 +242,28 @@ document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    
-    const category = tab.dataset.category;
-    renderNews(allNews, category);
+    renderNews(allNews, tab.dataset.category);
   });
 });
 
-// Refresh button
-function loadData() {
-  const btn = document.querySelector('.refresh-btn');
-  btn.textContent = '⟳ Refreshing...';
-  setTimeout(() => {
-    const now = new Date();
-    document.getElementById('lastUpdate').textContent = 
-      `Last updated: ${now.toLocaleString('en-US', { 
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-      })}`;
-    renderMarketCards(marketData);
-    renderNews(allNews);
-    btn.textContent = '↻ Refresh';
-  }, 500);
-}
-
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Dashboard initialized');
-  console.log('✅ Total news items:', allNews.length);
-  console.log('✅ Total market items:', marketData.length);
-  
-  // Print all URLs for verification
-  console.log('\n📰 ALL NEWS LINKS VERIFICATION (Google Search):');
-  allNews.forEach((item, i) => {
-    console.log(`\n  [${i}] ${item.title}`);
-    console.log(`     Search: ${item.search_query}`);
-    console.log(`     URL: ${item.full_url}`);
-    console.log(`     Valid: ✅`);
-  });
-  
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 Dashboard initializing — fetching live data...');
+
+  await fetchLiveData();
+
   renderMarketCards(marketData);
   renderNews(allNews);
   renderCharts();
-  
+  updateLastUpdateTime();
+
   // Auto-refresh every 5 minutes
-  setInterval(() => {
-    console.log('🔄 Auto-refresh...');
-    const now = new Date();
-    document.getElementById('lastUpdate').textContent = 
-      `Last updated: ${now.toLocaleString('en-US', { 
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-      })}`;
+  setInterval(async () => {
+    console.log('🔄 Auto-refreshing live data...');
+    await fetchLiveData();
     renderMarketCards(marketData);
-    renderNews(allNews);
+    renderNews(allNews, getActiveFilter());
+    renderCharts();
+    updateLastUpdateTime();
   }, 300000);
 });
