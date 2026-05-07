@@ -8,7 +8,7 @@ let allNews = [
     "source": "TechCrunch",
     "category": "ai",
     "excerpt": "OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities and multi-modal understanding...",
-    "url": "https://techcrunch.com/example1",
+    "url": "https://www.openai.com/news",
     "date": "May 07, 02:27 AM",
     "timestamp": Date.now()
   },
@@ -17,7 +17,7 @@ let allNews = [
     "source": "Reuters",
     "category": "finance",
     "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation shows signs of cooling...",
-    "url": "https://reuters.com/example2",
+    "url": "https://www.reuters.com/business",
     "date": "May 07, 01:27 AM",
     "timestamp": Date.now() - 3600000
   },
@@ -26,7 +26,7 @@ let allNews = [
     "source": "Bloomberg",
     "category": "finance",
     "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements in complex driving scenarios...",
-    "url": "https://bloomberg.com/example3",
+    "url": "https://www.bloomberg.com/news/tesla",
     "date": "May 07, 12:27 AM",
     "timestamp": Date.now() - 7200000
   },
@@ -35,7 +35,7 @@ let allNews = [
     "source": "AI Research Blog",
     "category": "ai",
     "excerpt": "New alignment techniques demonstrate 95% reduction in undesirable model behaviors...",
-    "url": "https://deepmind.com/example4",
+    "url": "https://www.deepmind.google/safety",
     "date": "May 06, 11:27 PM",
     "timestamp": Date.now() - 10800000
   },
@@ -44,7 +44,7 @@ let allNews = [
     "source": "VentureBeat",
     "category": "tech",
     "excerpt": "The new Blackwell architecture promises 10x performance improvements for LLM training...",
-    "url": "https://venturebeat.com/example5",
+    "url": "https://venturebeat.com/ai/nvidia",
     "date": "May 06, 10:27 PM",
     "timestamp": Date.now() - 14400000
   }
@@ -95,17 +95,21 @@ function renderNews(news, filter = 'all') {
     return;
   }
   
-  container.innerHTML = filtered.map(item => `
-    <div class="news-card" onclick="window.open('${item.url}', '_blank')">
-      <h3><a href="${item.url}" target="_blank">${item.title}</a></h3>
-      <div class="news-meta">
-        <span class="news-tag">${item.category.toUpperCase()}</span>
-        <span>• ${item.source}</span>
+  container.innerHTML = filtered.map(item => {
+    // Make URLs open in new tab and use rel="noopener noreferrer" for security
+    const linkTarget = item.url !== '#' ? item.url : 'https://www.google.com';
+    return `
+      <div class="news-card" onclick="window.open('${linkTarget}', '_blank')">
+        <h3><a href="${linkTarget}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${item.title}</a></h3>
+        <div class="news-meta">
+          <span class="news-tag">${item.category.toUpperCase()}</span>
+          <span>• ${item.source}</span>
+        </div>
+        <p class="news-excerpt">${item.excerpt}</p>
+        <div class="news-date">${item.date}</div>
       </div>
-      <p class="news-excerpt">${item.excerpt}</p>
-      <div class="news-date">${item.date}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // Render charts
