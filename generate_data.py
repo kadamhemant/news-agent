@@ -1,101 +1,150 @@
 #!/usr/bin/env python3
 """
-Hermes Agent Dashboard Data Generator
-Extracts news and URLs from cron job outputs
+Live Data Generator for News Agent Dashboard
+Fetches real-time news from NewsAPI and market data from Finnhub & CoinGecko
 """
 
 import os
-import re
 import json
+import requests
 from pathlib import Path
 from datetime import datetime
 
-# Paths
-HERMES_DIR = Path.home() / ".hermes"
-CRON_OUTPUT_DIR = HERMES_DIR / "cron" / "output"
+# API Keys from environment variables
+NEWS_API_KEY = os.getenv('NEWS_API_KEY')
+FINNHUB_API_KEY = os.getenv('FINNHUB_API_KEY')
+
 DASHBOARD_DIR = Path(__file__).parent / "data"
 
-def extract_urls_from_text(text):
-    """Extract all URLs from text"""
-    urls = re.findall(r'https://[^\s<>"\')]+', text)
-    return list(set(urls))[:5]  # Return up to 5 unique URLs
+def fetch_live_news():
+    """Fetch live news from NewsAPI"""
+    try:
+        if not NEWS_API_KEY:
+            print("⚠️  NEWS_API_KEY not found, using sample data")
+            return get_sample_news()
 
-def parse_cron_job(job_id, content):
-    """Parse a cron job output file and extract news items with URLs"""
-    news_items = []
-    
-    # Extract title from content (first line or first sentence)
-    lines = content.split('\n')
-    if lines:
-        title = lines[0].strip().replace('#', '').strip()
-        if not title:
-            title = "News Item"
-    else:
-        title = "News Item"
-    
-    # Extract excerpt (first paragraph)
-    excerpt_match = re.search(r'\n{2,}|([^\n]{100,400})', content)
-    excerpt = excerpt_match.group(1) if excerpt_match else content[:300]
-    
-    # Extract URLs
-    urls = extract_urls_from_text(content)
-    
-    # Determine category from content
-    content_lower = content.lower()
-    if 'stock' in content_lower or 'market' in content_lower or 'fed' in content_lower:
-        category = 'finance'
-    elif 'ai' in content_lower or 'machine learning' in content_lower or 'llm' in content_lower:
-        category = 'ai'
-    else:
-        category = 'tech'
-    
-    # Create news item
-    news_item = {
-        "title": title[:100],  # Limit length
-        "source": "Hermes Agent",
-        "category": category,
-        "excerpt": excerpt[:300],
-        "url": urls[0] if urls else "https://www.google.com/search?q=news",
-        "date": datetime.now().strftime('%b %d, %I:%M %p'),
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    return news_item
+        url = "https://newsapi.org/v2/everything"
+        params = {
+            'q': 'technology OR AI OR finance OR stock market',
+            'sortBy': 'publishedAt',
+            'language': 'en',
+            'pageSize': 10,
+            'apiKey': NEWS_API_KEY
+        }
 
-def extract_news_from_cron_jobs():
-    """Extract news from all Hermes Agent cron jobs"""
-    all_news = []
-    job_map = {
-        "9b46a4c3ca0f": "Daily AI News Digest",
-        "62e8a1463612": "Morning Briefing Bot",
-        "34b53b6cfc4c": "Claude Features Monitor",
-        "06b73b3ed7ef": "Hermes Skill Docs",
-    }
-    
-    for job_id in CRON_OUTPUT_DIR.iterdir():
-        if job_id.is_dir():
-            job_name = job_map.get(job_id.name, job_id.name)
-            
-            for date_dir in job_id.iterdir():
-                if date_dir.is_dir():
-                    for file in date_dir.iterdir():
-                        if file.suffix in ['.txt', '.md']:
-                            try:
-                                content = file.read_text()
-                                if len(content) > 50:  # Only process substantial files
-                                    news_item = parse_cron_job(job_id.name, content)
-                                    news_item["source"] = job_name
-                                    all_news.append(news_item)
-                            except Exception as e:
-                                print(f"Error reading {file}: {e}")
-    
-    return all_news
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
 
-def get_sample_news_with_urls():
-    """Fallback news with actual URLs"""
+        data = response.json()
+        articles = data.get('articles', [])
+
+        news_items = []
+        for article in articles[:8]:  # Limit to 8 articles
+            # Categorize based on title/description
+            content = (article.get('title', '') + ' ' + article.get('description', '')).lower()
+            if 'ai' in content or 'machine learning' in content or 'artificial' in content:
+                category = 'ai'
+            elif 'stock' in content or 'market' in content or 'finance' in content or 'bank' in content:
+                category = 'finance'
+            else:
+                category = 'tech'
+
+            news_item = {
+                'title': article.get('title', 'News Item')[:100],
+                'source': article.get('source', {}).get('name', 'News Source'),
+                'category': category,
+                'excerpt': article.get('description', article.get('content', ''))[:300],
+                'url': article.get('url', 'https://www.google.com/search?q=news'),
+                'date': datetime.now().strftime('%b %d, %I:%M %p'),
+                'timestamp': datetime.now().isoformat(),
+                'image': article.get('urlToImage')
+            }
+            news_items.append(news_item)
+
+        print(f"✅ Fetched {len(news_items)} live news articles from NewsAPI")
+        return news_items if news_items else get_sample_news()
+
+    except Exception as e:
+        print(f"❌ Error fetching news: {e}")
+        return get_sample_news()
+
+def fetch_live_market_data():
+    """Fetch live market data from Finnhub and CoinGecko"""
+    market_data = []
+
+    try:
+        if not FINNHUB_API_KEY:
+            print("⚠️  FINNHUB_API_KEY not found, using sample market data")
+            return get_sample_market_data()
+
+        # Fetch US Indices from Finnhub
+        indices = [
+            {'symbol': '^GSPC', 'name': 'S&P 500'},
+            {'symbol': '^INDC', 'name': 'Dow Jones'},
+            {'symbol': '^IXIC', 'name': 'NASDAQ'}
+        ]
+
+        for index in indices:
+            try:
+                url = f"https://finnhub.io/api/v1/quote"
+                params = {
+                    'symbol': index['symbol'],
+                    'token': FINNHUB_API_KEY
+                }
+
+                response = requests.get(url, params=params, timeout=5)
+                response.raise_for_status()
+
+                quote = response.json()
+                current_price = quote.get('c', 0)
+                prev_close = quote.get('pc', 1)
+                change = current_price - prev_close
+                change_percent = (change / prev_close * 100) if prev_close else 0
+
+                market_data.append({
+                    'name': index['name'],
+                    'value': f"{current_price:,.2f}",
+                    'change': f"{change_percent:+.2f}%",
+                    'positive': change_percent >= 0
+                })
+            except Exception as e:
+                print(f"⚠️  Could not fetch {index['name']}: {e}")
+
+        # Fetch Bitcoin price from CoinGecko (no API key needed)
+        try:
+            url = "https://api.coingecko.com/api/v3/simple/price"
+            params = {
+                'ids': 'bitcoin',
+                'vs_currencies': 'usd',
+                'include_24hr_change': 'true'
+            }
+
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
+
+            data = response.json()
+            btc_price = data.get('bitcoin', {}).get('usd', 0)
+            btc_change = data.get('bitcoin', {}).get('usd_24h_change', 0)
+
+            market_data.append({
+                'name': 'BTC-USD',
+                'value': f"${btc_price:,.2f}",
+                'change': f"{btc_change:+.2f}%",
+                'positive': btc_change >= 0
+            })
+        except Exception as e:
+            print(f"⚠️  Could not fetch Bitcoin price: {e}")
+
+        print(f"✅ Fetched {len(market_data)} live market prices")
+        return market_data if market_data else get_sample_market_data()
+
+    except Exception as e:
+        print(f"❌ Error fetching market data: {e}")
+        return get_sample_market_data()
+
+def get_sample_news():
+    """Fallback sample news data"""
     now = datetime.now()
-    
-    # Real news article URLs that always exist
     return [
         {
             "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
@@ -112,7 +161,7 @@ def get_sample_news_with_urls():
             "category": "finance",
             "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation cools...",
             "url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2024-03-13/",
-            "date": (now).strftime('%b %d, %I:%M %p'),
+            "date": now.strftime('%b %d, %I:%M %p'),
             "timestamp": now.isoformat()
         },
         {
@@ -121,16 +170,7 @@ def get_sample_news_with_urls():
             "category": "finance",
             "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...",
             "url": "https://www.bloomberg.com/news/articles/2024-03-13/tesla-fsd-beta-12-approval/",
-            "date": (now).strftime('%b %d, %I:%M %p'),
-            "timestamp": now.isoformat()
-        },
-        {
-            "title": "Google DeepMind AI Safety Milestone",
-            "source": "DeepMind",
-            "category": "ai",
-            "excerpt": "New alignment techniques demonstrate 95% reduction in undesirable behaviors...",
-            "url": "https://deepmind.google/discover/blog/ai-safety-alignment-2024/",
-            "date": (now).strftime('%b %d, %I:%M %p'),
+            "date": now.strftime('%b %d, %I:%M %p'),
             "timestamp": now.isoformat()
         },
         {
@@ -139,13 +179,13 @@ def get_sample_news_with_urls():
             "category": "tech",
             "excerpt": "The new Blackwell architecture promises 10x performance improvements...",
             "url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2024/",
-            "date": (now).strftime('%b %d, %I:%M %p'),
+            "date": now.strftime('%b %d, %I:%M %p'),
             "timestamp": now.isoformat()
         }
     ]
 
-def get_market_data():
-    """Sample market data"""
+def get_sample_market_data():
+    """Fallback sample market data"""
     return [
         {"name": "S&P 500", "value": "5,234.18", "change": "+1.24%", "positive": True},
         {"name": "Dow Jones", "value": "41,087.13", "change": "+0.89%", "positive": True},
@@ -154,35 +194,32 @@ def get_market_data():
     ]
 
 def generate_dashboard_data():
-    """Generate all dashboard data"""
+    """Generate all dashboard data with live APIs"""
     DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Try to extract from cron jobs
-    news_data = extract_news_from_cron_jobs()
-    
-    # If no data found, use sample URLs
-    if not news_data:
-        print("⚠️ No cron job data found, using sample news with real URLs")
-        news_data = get_sample_news_with_urls()
-    else:
-        print(f"✅ Extracted {len(news_data)} news items from Hermes Agent")
-    
+
+    # Fetch live news
+    print("🚀 Fetching live news...")
+    news_data = fetch_live_news()
+
     # Export news
     news_file = DASHBOARD_DIR / "news.json"
     with open(news_file, 'w') as f:
         json.dump(news_data, f, indent=2)
     print(f"✅ News data saved to {news_file}")
-    
+
+    # Fetch live market data
+    print("📈 Fetching live market data...")
+    market_data = fetch_live_market_data()
+
     # Export market data
-    market_data = get_market_data()
     market_file = DASHBOARD_DIR / "market.json"
     with open(market_file, 'w') as f:
         json.dump(market_data, f, indent=2)
     print(f"✅ Market data saved to {market_file}")
-    
+
     return news_data, market_data
 
 if __name__ == "__main__":
-    print("🚀 Generating dashboard data with real URLs...")
+    print("🌍 Generating dashboard data with live APIs...")
     generate_dashboard_data()
     print("✅ Done!")
