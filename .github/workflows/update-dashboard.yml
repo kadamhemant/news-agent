@@ -2,7 +2,11 @@ name: Deploy News Pulse
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    # Every 2 hours from 8am EST to 10pm EST (skipping 12am-8am EST)
+    # 8am EST=13 UTC, 10am=15, 12pm=17, 2pm=19, 4pm=21, 6pm=23,
+    # 8pm=01 UTC, 10pm=03 UTC (next day)
+    # The 13 UTC run resets today's history (see generate_data.py)
+    - cron: '0 13,15,17,19,21,23,1,3 * * *'
   workflow_dispatch:
   push:
     branches: [main]

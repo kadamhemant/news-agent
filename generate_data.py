@@ -132,20 +132,45 @@ def deduplicate(articles):
 
 def generate_news():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    output_file = DATA_DIR / "news.json"
 
-    all_articles = []
+    # Daily reset at 8am EST (= 13:00 UTC) — first scheduled run of the day
+    # wipes yesterday's history so the page shows "today's stories" only.
+    utc_hour = datetime.utcnow().hour
+    is_morning_reset = utc_hour == 13
+
+    # Load existing history (unless it's the morning reset)
+    existing_articles = []
+    if is_morning_reset:
+        print("🌅 Morning reset (8am EST) — starting fresh for today\n")
+    elif output_file.exists():
+        try:
+            with open(output_file, 'r', encoding='utf-8') as f:
+                existing_articles = json.load(f)
+            print(f"📚 Loaded {len(existing_articles)} stories from today's history\n")
+        except Exception as e:
+            print(f"⚠️  Could not load history: {e}\n")
+
+    # Fetch fresh stories from APIs
+    new_articles = []
     for category_key, config in CATEGORIES.items():
         articles = fetch_category_news(category_key, config['query'], config['limit'])
-        all_articles.extend(articles)
+        new_articles.extend(articles)
 
-    unique = deduplicate(all_articles)
+    print(f"\n🆕 Fetched {len(new_articles)} new articles this run")
+
+    # Merge new + existing history, dedup by URL/title, keep newest first
+    combined = new_articles + existing_articles
+    unique = deduplicate(combined)
     unique.sort(key=lambda x: x.get('published_at', ''), reverse=True)
 
-    output_file = DATA_DIR / "news.json"
+    # Cap at 120 articles to prevent unbounded growth
+    unique = unique[:120]
+
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(unique, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📊 Total: {len(unique)} unique stories saved")
+    print(f"\n📊 Total: {len(unique)} stories saved (this run + today's history)")
 
     breakdown = {}
     for article in unique:
