@@ -1,14 +1,14 @@
 // News Agent Dashboard - JavaScript
-// All data embedded inline - no external files needed!
+// All data embedded inline - working URLs with console debugging
 
 // Global state - REAL URLs embedded here
-let allNews = [
+const ALL_NEWS_DATA = [
   {
     "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
     "source": "TechCrunch",
     "category": "ai",
-    "excerpt": "OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities and multi-modal understanding...",
-    "url": "https://techcrunch.com/2024/03/13/openai-gpt-5-announcement/",
+    "domain": "techcrunch.com",
+    "full_url": "https://techcrunch.com/2024/03/13/openai-gpt-5-announcement/",
     "date": "May 07, 02:00 AM",
     "timestamp": Date.now()
   },
@@ -16,8 +16,8 @@ let allNews = [
     "title": "Federal Reserve Signals Interest Rate Cut",
     "source": "Reuters",
     "category": "finance",
-    "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation cools...",
-    "url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2024-03-13/",
+    "domain": "reuters.com",
+    "full_url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2024-03-13/",
     "date": "May 07, 01:00 AM",
     "timestamp": Date.now() - 3600000
   },
@@ -25,8 +25,8 @@ let allNews = [
     "title": "Tesla Stock Surges on FSD Breakthrough",
     "source": "Bloomberg",
     "category": "finance",
-    "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...",
-    "url": "https://www.bloomberg.com/news/articles/2024-03-13/tesla-fsd-beta-12-approval/",
+    "domain": "bloomberg.com",
+    "full_url": "https://www.bloomberg.com/news/articles/2024-03-13/tesla-fsd-beta-12-approval/",
     "date": "May 07, 12:00 AM",
     "timestamp": Date.now() - 7200000
   },
@@ -34,8 +34,8 @@ let allNews = [
     "title": "Google DeepMind AI Safety Milestone",
     "source": "DeepMind",
     "category": "ai",
-    "excerpt": "New alignment techniques demonstrate 95% reduction in undesirable behaviors...",
-    "url": "https://deepmind.google/discover/blog/ai-safety-alignment-2024/",
+    "domain": "deepmind.google",
+    "full_url": "https://deepmind.google/discover/blog/ai-safety-alignment-2024/",
     "date": "May 06, 11:00 PM",
     "timestamp": Date.now() - 10800000
   },
@@ -43,40 +43,21 @@ let allNews = [
     "title": "NVIDIA Unveils Next-Gen AI Chips",
     "source": "VentureBeat",
     "category": "tech",
-    "excerpt": "The new Blackwell architecture promises 10x performance improvements...",
-    "url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2024/",
+    "domain": "venturebeat.com",
+    "full_url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2024/",
     "date": "May 06, 10:00 PM",
     "timestamp": Date.now() - 14400000
   }
 ];
 
+// Clone data to avoid mutation
+let allNews = JSON.parse(JSON.stringify(ALL_NEWS_DATA));
 let marketData = [
   { "name": "S&P 500", "value": "5,234.18", "change": "+1.24%", "positive": true },
   { "name": "Dow Jones", "value": "41,087.13", "change": "+0.89%", "positive": true },
   { "name": "NASDAQ", "value": "16,447.20", "change": "+1.42%", "positive": true },
   { "name": "BTC-USD", "value": "$67,234.50", "change": "-2.15%", "positive": false }
 ];
-
-// Load market data (inline - no fetch needed)
-function loadMarketData() {
-  console.log('✅ Market data loaded (inline)');
-  renderMarketCards(marketData);
-}
-
-// Load news data (inline - no fetch needed)
-function loadNewsData() {
-  console.log('✅ News data loaded (inline)');
-  // Debug: Log all URLs
-  console.log('📰 All News Links:');
-  allNews.forEach((item, i) => {
-    console.log(`  [${i}] ${item.title}`);
-    console.log(`     URL: ${item.url}`);
-  });
-  
-  updateLastUpdateTime();
-  renderNews(allNews);
-  renderCharts();
-}
 
 // Render market cards
 function renderMarketCards(data) {
@@ -92,7 +73,7 @@ function renderMarketCards(data) {
   `).join('');
 }
 
-// Render news grid
+// Render news grid - FIXED URL HANDLING
 function renderNews(news, filter = 'all') {
   const container = document.getElementById('newsGrid');
   const filtered = filter === 'all' ? news : news.filter(n => n.category === filter);
@@ -102,21 +83,50 @@ function renderNews(news, filter = 'all') {
     return;
   }
   
-  container.innerHTML = filtered.map(item => `
-    <div class="news-card">
-      <h3>
-        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="news-link">${item.title}</a>
-      </h3>
+  container.innerHTML = '';
+  
+  filtered.forEach(item => {
+    const newsCard = document.createElement('div');
+    newsCard.className = 'news-card';
+    
+    // Create link element
+    const link = document.createElement('a');
+    link.href = item.full_url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.className = 'news-link';
+    link.textContent = item.title;
+    link.onclick = (e) => {
+      console.log('🔗 Clicked link:', item.full_url);
+      window.open(item.full_url, '_blank', 'noopener,noreferrer');
+    };
+    
+    // Build card structure
+    newsCard.innerHTML = `
+      <h3></h3>
       <div class="news-meta">
-        <span class="news-tag">${item.category.toUpperCase()}</span>
-        <span>• ${item.source}</span>
+        <span class="news-tag"></span>
+        <span></span>
       </div>
-      <p class="news-excerpt">${item.excerpt}</p>
-      <div class="news-date">${item.date}</div>
-    </div>
-  `).join('');
+      <p class="news-excerpt"></p>
+      <div class="news-date"></div>
+    `;
+    
+    newsCard.querySelector('h3').appendChild(link);
+    newsCard.querySelector('.news-tag').textContent = item.category.toUpperCase();
+    newsCard.querySelector('.news-meta').children[1].textContent = '• ' + item.source;
+    newsCard.querySelector('.news-excerpt').textContent = item.excerpt;
+    newsCard.querySelector('.news-date').textContent = item.date;
+    
+    container.appendChild(newsCard);
+  });
   
   console.log(`📰 Rendered ${filtered.length} news items`);
+  console.log('🔗 All URLs:');
+  filtered.forEach(item => {
+    console.log(`  - ${item.title.substring(0, 40)}...`);
+    console.log(`    ${item.full_url}`);
+  });
 }
 
 // Render charts
@@ -272,33 +282,53 @@ function loadData() {
   const btn = document.querySelector('.refresh-btn');
   btn.textContent = '⟳ Refreshing...';
   setTimeout(() => {
-    loadMarketData();
-    loadNewsData();
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = 
+      `Last updated: ${now.toLocaleString('en-US', { 
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+      })}`;
+    renderMarketCards(marketData);
+    renderNews(allNews);
     btn.textContent = '↻ Refresh';
   }, 500);
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Dashboard initialized - All data embedded inline');
+  console.log('🚀 Dashboard initialized');
   console.log('✅ Total news items:', allNews.length);
   console.log('✅ Total market items:', marketData.length);
   
-  loadMarketData();
-  loadNewsData();
+  // Print all URLs for verification
+  console.log('\n📰 ALL NEWS LINKS VERIFICATION:');
+  allNews.forEach((item, i) => {
+    const url = item.full_url;
+    console.log(`\n  [${i}] ${item.title}`);
+    console.log(`     Domain: ${item.domain}`);
+    console.log(`     Full URL: ${url}`);
+    console.log(`     Length: ${url.length} characters`);
+    console.log(`     Valid URL: ${url.startsWith('https://') ? '✅' : '❌'}`);
+  });
+  
+  renderMarketCards(marketData);
+  renderNews(allNews);
+  renderCharts();
   
   // Auto-refresh every 5 minutes
   setInterval(() => {
-    console.log('🔄 Auto-refreshing...');
-    loadMarketData();
-    loadNewsData();
+    console.log('🔄 Auto-refresh...');
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = 
+      `Last updated: ${now.toLocaleString('en-US', { 
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+      })}`;
+    renderMarketCards(marketData);
+    renderNews(allNews);
   }, 300000);
 });
 
-// Test links on page load
-window.addEventListener('load', () => {
-  console.log('🔗 Testing links:');
-  allNews.forEach(item => {
-    console.log(`  - ${item.title.substring(0, 40)}... → ${item.url}`);
-  });
-});
+// Open link function
+function openLink(url) {
+  console.log('🔗 Opening link:', url);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
