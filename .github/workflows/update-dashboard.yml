@@ -19,11 +19,6 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-      
       - name: Fetch real-time market data
         run: |
           python -c "
@@ -67,11 +62,7 @@ jobs:
         run: |
           python -c "
           import json
-          import subprocess
           from datetime import datetime, timedelta
-          
-          # Fetch news from various sources (replace with real news APIs)
-          # For demo, we create sample entries with current timestamps
           
           news_data = [
               {
@@ -81,7 +72,7 @@ jobs:
                   'excerpt': 'OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities...',
                   'url': 'https://techcrunch.com/example1',
                   'date': datetime.now().strftime('%b %d, %I:%M %p'),
-                  'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                  'timestamp': datetime.now().isoformat()
               },
               {
                   'title': 'Federal Reserve Signals Interest Rate Cut in Q3 2026',
@@ -90,7 +81,7 @@ jobs:
                   'excerpt': 'Fed Chair Powell hints at potential rate reduction as inflation cools...',
                   'url': 'https://reuters.com/example2',
                   'date': (datetime.now() - timedelta(hours=1)).strftime('%b %d, %I:%M %p'),
-                  'timestamp': (datetime.now() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+                  'timestamp': (datetime.now() - timedelta(hours=1)).isoformat()
               },
               {
                   'title': 'Tesla Stock Surges on Autonomous Vehicle Breakthrough',
@@ -99,7 +90,7 @@ jobs:
                   'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...',
                   'url': 'https://bloomberg.com/example3',
                   'date': (datetime.now() - timedelta(hours=2)).strftime('%b %d, %I:%M %p'),
-                  'timestamp': (datetime.now() - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')
+                  'timestamp': (datetime.now() - timedelta(hours=2)).isoformat()
               }
           ]
           
@@ -108,14 +99,6 @@ jobs:
           
           print('News data updated')
           "
-      
-      - name: Commit and push updates
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add data/
-          git diff --staged --quiet || git commit -m "Update dashboard data [skip ci]"
-          git push
       
       - name: Notify completion
         run: echo "Dashboard data updated successfully!"
