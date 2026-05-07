@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-05-07T16:30:00Z",
+  "location": {
+    "city": "Cumming",
+    "state": "GA",
+    "zipCode": "30040",
+    "latitude": 34.3144,
+    "longitude": -84.1417,
+    "timezone": "America/New_York"
+  },
+  "current": {
+    "temperature": 67.9,
+    "temperatureUnit": "F",
+    "conditions": "Cloudy (WMO 2 - Mainly cloudy)",
+    "humidity": 85,
+    "windSpeed": 11.0,
+    "windSpeedUnit": "mph",
+    "observationTime": "2026-05-07T16:30:00Z"
+  },
+  "forecast": {
+    "today": {
+      "date": "2026-05-07",
+      "high": 68.4,
+      "low": 60.9,
+      "conditions": "Rainy (WMO 65 - Moderate rain)",
+      "precipitationChance": 65
+    },
+    "tomorrow": {
+      "date": "2026-05-08",
+      "high": 69.7,
+      "low": 49.0,
+      "conditions": "Cloudy (WMO 3 - Partly cloudy)",
+      "precipitationChance": 30
+    },
+    "dayAfter": {
+      "date": "2026-05-09",
+      "high": 68.9,
+      "low": 52.7,
+      "conditions": "Rainy (WMO 63 - Moderate rain)",
+      "precipitationChance": 70
+    }
+  },
+  "source": "Open-Meteo API",
+  "sourceUrl": "https://api.open-meteo.com/v1/forecast"
+}

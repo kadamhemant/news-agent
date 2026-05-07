@@ -1,26 +1,34 @@
-[
-  {
-    "name": "S&P 500",
-    "value": "5,234.18",
-    "change": "+1.24%",
-    "positive": true
-  },
-  {
-    "name": "Dow Jones",
-    "value": "41,087.13",
-    "change": "+0.89%",
-    "positive": true
-  },
-  {
-    "name": "NASDAQ",
-    "value": "16,447.20",
-    "change": "+1.42%",
-    "positive": true
-  },
-  {
-    "name": "BTC-USD",
-    "value": "$67,234.50",
-    "change": "-2.15%",
-    "positive": false
-  }
-]
+{
+  "generatedAt": "2026-05-07T16:30:00Z",
+  "timeSeries": [
+    {
+      "name": "S&P 500",
+      "symbol": "SPY",
+      "value": "5,242.35",
+      "change": "+1.31%",
+      "positive": true
+    },
+    {
+      "name": "Dow Jones",
+      "symbol": "DIA",
+      "value": "41,112.84",
+      "change": "+0.92%",
+      "positive": true
+    },
+    {
+      "name": "NASDAQ",
+      "symbol": "QQQ",
+      "value": "16,478.92",
+      "change": "+1.48%",
+      "positive": true
+    },
+    {
+      "name": "BTC-USD",
+      "symbol": "BTC-USD",
+      "value": "$67,456.20",
+      "change": "-1.89%",
+      "positive": false
+    }
+  ],
+  "source": "Yahoo Finance"
+}

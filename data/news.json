@@ -1,47 +1,81 @@
-[
-  {
-    "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
-    "source": "TechCrunch",
-    "category": "ai",
-    "excerpt": "OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities...",
-    "url": "https://techcrunch.com/2024/03/13/openai-gpt-5-announcement/",
-    "date": "May 07, 02:45 AM",
-    "timestamp": "2026-05-07T02:45:02.731857"
-  },
-  {
-    "title": "Federal Reserve Signals Interest Rate Cut",
-    "source": "Reuters",
-    "category": "finance",
-    "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation cools...",
-    "url": "https://www.reuters.com/markets/us/federal-reserve-interest-rate-2024-03-13/",
-    "date": "May 07, 02:45 AM",
-    "timestamp": "2026-05-07T02:45:02.731857"
-  },
-  {
-    "title": "Tesla Stock Surges on FSD Breakthrough",
-    "source": "Bloomberg",
-    "category": "finance",
-    "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...",
-    "url": "https://www.bloomberg.com/news/articles/2024-03-13/tesla-fsd-beta-12-approval/",
-    "date": "May 07, 02:45 AM",
-    "timestamp": "2026-05-07T02:45:02.731857"
-  },
-  {
-    "title": "Google DeepMind AI Safety Milestone",
-    "source": "DeepMind",
-    "category": "ai",
-    "excerpt": "New alignment techniques demonstrate 95% reduction in undesirable behaviors...",
-    "url": "https://deepmind.google/discover/blog/ai-safety-alignment-2024/",
-    "date": "May 07, 02:45 AM",
-    "timestamp": "2026-05-07T02:45:02.731857"
-  },
-  {
-    "title": "NVIDIA Unveils Next-Gen AI Chips",
-    "source": "VentureBeat",
-    "category": "tech",
-    "excerpt": "The new Blackwell architecture promises 10x performance improvements...",
-    "url": "https://venturebeat.com/ai/nvidia-blackwell-ai-chips-2024/",
-    "date": "May 07, 02:45 AM",
-    "timestamp": "2026-05-07T02:45:02.731857"
+{
+  "generatedAt": "2026-05-07T16:30:00Z",
+  "breakingNews": [
+    {
+      "title": "Hantavirus outbreak on cruise ship not start of pandemic, UN health agency says",
+      "description": "The World Health Organisation says it is not in the same situation as with Covid-19 because hantavirus spreads differently.",
+      "url": "https://www.bbc.com/news/articles/cnvpzgn26edo",
+      "source": "BBC News",
+      "timestamp": "2026-05-07T16:20:52Z"
+    },
+    {
+      "title": "UK immigration officer among two men guilty of working for Chinese intelligence",
+      "description": "Chi Leung \"Peter\" Wai used the main immigration database to track Hong Kong dissidents in the UK.",
+      "url": "https://www.bbc.com/news/articles/c0m2wjlkzplo",
+      "source": "BBC News",
+      "timestamp": "2026-05-07T16:06:57Z"
+    },
+    {
+      "title": "David Attenborough says he is 'overwhelmed' by 100th birthday messages",
+      "description": "The legendary wildlife broadcaster thanks fans in a message the day before he reaches his centenary.",
+      "url": "https://www.bbc.com/news/articles/cp3pww9g0p5o",
+      "source": "BBC News",
+      "timestamp": "2026-05-07T16:00:10Z"
+    },
+    {
+      "title": "Rosenberg: Russia's Victory Day parade with no tanks a sign Ukraine war not going to plan",
+      "description": "For the first time in nearly two decades, there will be no military hardware, just soldiers during Saturday's parade in Moscow.",
+      "url": "https://www.bbc.com/news/articles/cwy2gj2jlr8o",
+      "source": "BBC News",
+      "timestamp": "2026-05-07T16:00:05Z"
+    },
+    {
+      "title": "Man arrested over intimidating behaviour near Andrew's home",
+      "description": "A man is being held on suspicion of a public order offence and possessing an offensive weapon.",
+      "url": "https://www.bbc.com/news/articles/c072z2gm5lxo",
+      "source": "BBC News",
+      "timestamp": "2026-05-07T15:25:10Z"
+    }
+  ],
+  "techNews": [
+    {
+      "title": "AlphaEvolve: Gemini-powered coding agent scaling impact across fields",
+      "url": "https://deepmind.google/blog/alphaevolve-impact/",
+      "source": "DeepMind",
+      "score": 86,
+      "timestamp": "2026-05-07T16:02:20Z"
+    },
+    {
+      "title": "Child marriages plunged when girls stayed in school in Nigeria",
+      "url": "https://www.nature.com/articles/d41586-026-00796-2",
+      "source": "Nature",
+      "score": 141,
+      "timestamp": "2026-05-07T15:30:04Z"
+    },
+    {
+      "title": "The map that keeps Burning Man honest",
+      "url": "https://www.not-ship.com/burning-man-moop/",
+      "source": "Not a Ship",
+      "score": 246,
+      "timestamp": "2026-05-07T16:19:30Z"
+    },
+    {
+      "title": "Authorities say Flock cameras' data allegedly used for immigration enforcement",
+      "url": "https://www.ohio.news/stories/dayton-authorities-say-that-flock-cameras-data-allegedly-used-for-immigration-enforcement/",
+      "source": "Ohio News",
+      "score": 25,
+      "timestamp": "2026-05-07T16:45:45Z"
+    },
+    {
+      "title": "I switched from Mac to a Lenovo Chromebook, and you can too",
+      "url": "https://blog.johnozbay.com/i-left-apples-ecosystem-for-a-lenovo-chromebook-and-you-can-too.html",
+      "source": "John's Blog",
+      "score": 11,
+      "timestamp": "2026-05-07T16:41:24Z"
+    }
+  ],
+  "sourceLinks": {
+    "bbc": "https://feeds.bbci.co.uk/news/rss.xml",
+    "hackerNews": "https://news.ycombinator.com/"
   }
-]
+}
