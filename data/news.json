@@ -1,56 +1,20 @@
 [
   {
-    "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning Capabilities",
+    "title": "OpenAI Announces GPT-5 with Revolutionary Reasoning",
     "source": "TechCrunch",
     "category": "ai",
     "excerpt": "OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities and multi-modal understanding...",
-    "url": "https://techcrunch.com/example1",
-    "date": "May 07, 01:53 AM",
-    "timestamp": "2026-05-07T01:53:23.431353"
+    "url": "#",
+    "date": "May 07, 02:06 AM",
+    "timestamp": "2026-05-07T02:06:55.961997"
   },
   {
-    "title": "Federal Reserve Signals Interest Rate Cut in Q3 2026",
+    "title": "Federal Reserve Signals Interest Rate Cut",
     "source": "Reuters",
     "category": "finance",
     "excerpt": "Fed Chair Powell hints at potential rate reduction as inflation shows signs of cooling...",
-    "url": "https://reuters.com/example2",
-    "date": "May 07, 12:53 AM",
-    "timestamp": "2026-05-07T00:53:23.431353"
-  },
-  {
-    "title": "Tesla Stock Surges on Autonomous Vehicle Breakthrough",
-    "source": "Bloomberg",
-    "category": "finance",
-    "excerpt": "TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements in complex driving scenarios...",
-    "url": "https://bloomberg.com/example3",
-    "date": "May 06, 11:53 PM",
-    "timestamp": "2026-05-06T23:53:23.431353"
-  },
-  {
-    "title": "Google DeepMind Achieves Major AI Safety Milestone",
-    "source": "AI Research Blog",
-    "category": "ai",
-    "excerpt": "New alignment techniques demonstrate 95% reduction in undesirable model behaviors...",
-    "url": "https://deepmind.com/example4",
-    "date": "May 06, 10:53 PM",
-    "timestamp": "2026-05-06T22:53:23.431353"
-  },
-  {
-    "title": "NVIDIA Unveils Next-Gen AI Chips for Large Language Models",
-    "source": "VentureBeat",
-    "category": "tech",
-    "excerpt": "The new Blackwell architecture promises 10x performance improvements for LLM training...",
-    "url": "https://venturebeat.com/example5",
-    "date": "May 06, 09:53 PM",
-    "timestamp": "2026-05-06T21:53:23.431353"
-  },
-  {
-    "title": "SpaceX Starship Successfully Completes Orbital Refueling Test",
-    "source": "Space.com",
-    "category": "tech",
-    "excerpt": "Major milestone achieved as SpaceX demonstrates critical technology for Mars missions...",
-    "url": "https://space.com/example6",
-    "date": "May 06, 08:53 PM",
-    "timestamp": "2026-05-06T20:53:23.431353"
+    "url": "#",
+    "date": "May 07, 02:06 AM",
+    "timestamp": "2026-05-07T02:06:55.961997"
   }
 ]

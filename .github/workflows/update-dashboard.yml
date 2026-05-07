@@ -19,37 +19,54 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Fetch real-time market data
+      - name: Export data
         run: |
-          python -c "
+          python3 -c "
           import json
+          from datetime import datetime
           
-          # Sample market data (replace with actual API calls)
-          market_data = [
+          # News data
+          news_data = [
               {
-                  'name': 'S&P 500',
-                  'value': '5,234.18',
-                  'change': '+1.24%',
-                  'positive': True
+                  'title': 'OpenAI Announces GPT-5 with Revolutionary Reasoning',
+                  'source': 'TechCrunch',
+                  'category': 'ai',
+                  'excerpt': 'OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities...',
+                  'url': '#',
+                  'date': datetime.now().strftime('%b %d, %I:%M %p'),
+                  'timestamp': datetime.now().isoformat()
               },
               {
-                  'name': 'Dow Jones',
-                  'value': '41,087.13',
-                  'change': '+0.89%',
-                  'positive': True
+                  'title': 'Federal Reserve Signals Interest Rate Cut',
+                  'source': 'Reuters',
+                  'category': 'finance',
+                  'excerpt': 'Fed Chair Powell hints at potential rate reduction...',
+                  'url': '#',
+                  'date': datetime.now().strftime('%b %d, %I:%M %p'),
+                  'timestamp': datetime.now().isoformat()
               },
               {
-                  'name': 'NASDAQ',
-                  'value': '16,447.20',
-                  'change': '+1.42%',
-                  'positive': True
-              },
-              {
-                  'name': 'BTC-USD',
-                  'value': '$67,234.50',
-                  'change': '-2.15%',
-                  'positive': False
+                  'title': 'Tesla Stock Surges on Autonomous Vehicle Breakthrough',
+                  'source': 'Bloomberg',
+                  'category': 'finance',
+                  'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 improvements...',
+                  'url': '#',
+                  'date': datetime.now().strftime('%b %d, %I:%M %p'),
+                  'timestamp': datetime.now().isoformat()
               }
+          ]
+          
+          with open('data/news.json', 'w') as f:
+              json.dump(news_data, f, indent=2)
+          
+          print('News data updated')
+          
+          # Market data
+          market_data = [
+              {'name': 'S&P 500', 'value': '5,234.18', 'change': '+1.24%', 'positive': True},
+              {'name': 'Dow Jones', 'value': '41,087.13', 'change': '+0.89%', 'positive': True},
+              {'name': 'NASDAQ', 'value': '16,447.20', 'change': '+1.42%', 'positive': True},
+              {'name': 'BTC-USD', 'value': '$67,234.50', 'change': '-2.15%', 'positive': False}
           ]
           
           with open('data/market.json', 'w') as f:
@@ -58,47 +75,11 @@ jobs:
           print('Market data updated')
           "
       
-      - name: Fetch latest news
-        run: |
-          python -c "
-          import json
-          from datetime import datetime, timedelta
-          
-          news_data = [
-              {
-                  'title': 'OpenAI Announces GPT-5 with Revolutionary Reasoning Capabilities',
-                  'source': 'TechCrunch',
-                  'category': 'ai',
-                  'excerpt': 'OpenAI has unveiled GPT-5, featuring unprecedented reasoning abilities...',
-                  'url': 'https://techcrunch.com/example1',
-                  'date': datetime.now().strftime('%b %d, %I:%M %p'),
-                  'timestamp': datetime.now().isoformat()
-              },
-              {
-                  'title': 'Federal Reserve Signals Interest Rate Cut in Q3 2026',
-                  'source': 'Reuters',
-                  'category': 'finance',
-                  'excerpt': 'Fed Chair Powell hints at potential rate reduction as inflation cools...',
-                  'url': 'https://reuters.com/example2',
-                  'date': (datetime.now() - timedelta(hours=1)).strftime('%b %d, %I:%M %p'),
-                  'timestamp': (datetime.now() - timedelta(hours=1)).isoformat()
-              },
-              {
-                  'title': 'Tesla Stock Surges on Autonomous Vehicle Breakthrough',
-                  'source': 'Bloomberg',
-                  'category': 'finance',
-                  'excerpt': 'TSLA jumps 8% after FSD Beta 12.0 shows remarkable improvements...',
-                  'url': 'https://bloomberg.com/example3',
-                  'date': (datetime.now() - timedelta(hours=2)).strftime('%b %d, %I:%M %p'),
-                  'timestamp': (datetime.now() - timedelta(hours=2)).isoformat()
-              }
-          ]
-          
-          with open('data/news.json', 'w') as f:
-              json.dump(news_data, f, indent=2)
-          
-          print('News data updated')
-          "
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
       
       - name: Notify completion
-        run: echo "Dashboard data updated successfully!"
+        run: echo "✅ Dashboard updated successfully!"
